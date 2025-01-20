@@ -1,0 +1,3 @@
+/dev/cdrom	/media/cdrom	iso9660	noauto,ro 0 0
+/dev/usbdisk	/media/usb	vfat	noauto,ro 0 0
+UUID=7E4A-1720	/media/mmcblk0p1	vfat	noauto,ro 0 0

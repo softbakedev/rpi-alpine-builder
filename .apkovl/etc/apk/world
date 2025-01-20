@@ -1,0 +1,7 @@
+alpine-base
+busybox-mdev-openrc
+chrony
+iw
+openssh
+openssl
+wpa_supplicant
