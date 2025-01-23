@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"log"
+	_ "softbake.dev/rpialp/internal"
 	"strings"
 )
+
+
 
 // Global variables for CLI usage:
 var (
@@ -20,9 +23,11 @@ var (
 	ssidPsk       string
 	rootPass      string
 	alpineVersion string
+	// Verbose is tied to the --verbose/-v flag; logger prints to /dev/null by default.
+	var verbose bool
 
 	// We'll unmarshal JSON into alpineConfig in main.go
-	alpineConfig AlpineConfig
+	alpineConfig internal.AlpineConfig
 )
 
 func init() {
@@ -33,7 +38,7 @@ func init() {
 	rootCmd.Flags().StringVar(&ssid, "ssid", "", "Wi-fi name")
 	rootCmd.Flags().StringVar(&ssidPass, "ssidPass", "", "Wi-Fi passphrase")
 	rootCmd.Flags().StringVar(&rootPass, "rootPass", "", "Root passphrase")
-	rootCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Enable verbose logging")
+	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 	// Add the build subcommand to rootCmd
 	rootCmd.AddCommand(buildCmd)
 }

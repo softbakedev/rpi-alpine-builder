@@ -1,0 +1,22 @@
+{
+  "name": "Raspberry Pi Alpine Image Builder",
+  "short_name": "Alpine Builder",
+  "description": "Build custom Alpine Linux images for Raspberry Pi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020817",
+  "theme_color": "#e30b5d",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
