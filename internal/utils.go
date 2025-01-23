@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"archive/tar"
@@ -21,7 +21,7 @@ import (
 )
 
 // Prompt reads a line from stdin (non-hidden)
-func prompt(label string) string {
+func Prompt(label string) string {
 	fmt.Print(label)
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
@@ -30,26 +30,26 @@ func prompt(label string) string {
 	return ""
 }
 
-// promptHidden reads a line from stdin without echoing it.
-func promptHidden(label string) string {
+// PromptHidden reads a line from stdin without echoing it.
+func PromptHidden(label string) string {
 	fmt.Print(label)
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Println()
 	if err != nil {
 		fmt.Println("Error reading hidden input:", err)
-		return prompt("Please enter again (not hidden): ")
+		return Prompt("Please enter again (not hidden): ")
 	}
 	return string(bytePassword)
 }
 
-// generateWpaPsk derives a WPA2-PSK from SSID + passphrase using PBKDF2(HMAC-SHA1)
-func generateWpaPsk(ssid, passphrase string) (string, error) {
+// GenerateWpaPsk derives a WPA2-PSK from SSID + passphrase using PBKDF2(HMAC-SHA1)
+func GenerateWpaPsk(ssid, passphrase string) (string, error) {
 	key := pbkdf2.Key([]byte(passphrase), []byte(ssid), 4096, 32, sha1.New)
 	return fmt.Sprintf("%x", key), nil
 }
 
-// generateShadowPasswordHash produces a /etc/shadow-compatible SHA-512 hash with a random salt.
-func generateShadowPasswordHash(password string) (string, error) {
+// GenerateShadowPasswordHash produces a /etc/shadow-compatible SHA-512 hash with a random salt.
+func GenerateShadowPasswordHash(password string) (string, error) {
 	// Generate a random salt (16 bytes for a strong salt)
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {

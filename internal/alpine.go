@@ -1,9 +1,10 @@
-package main
+package internal
 
 import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	cp "github.com/otiai10/copy"
 	"io"
@@ -16,8 +17,8 @@ import (
 	"time"
 )
 
-// AlpineConfig represents the structure of alpine_versions.json
-type AlpineConfig struct {
+// AlpineVersions represents the structure of alpine_versions.json
+type AlpineVersions struct {
 	Versions []string `json:"versions"`
 }
 
@@ -27,7 +28,7 @@ type PlaceholderReplacement struct {
 	Placeholders map[string]string
 }
 
-// progressReader wraps an underlying io.Reader to track the
+// ProgressReader wraps an underlying io.Reader to track the
 // number of bytes read and print progress.
 type ProgressReader struct {
 	io.Reader
@@ -51,6 +52,18 @@ func (pr *ProgressReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// GetAlpineVersions return list of alpine versions
+func GetAlpineVersions() ([]string, error) {
+	var versions AlpineVersions
+	// 1. Unmarshal the embedded JSON (alpine_versions.json) into alpineConfig
+	if err := json.Unmarshal(VersionsData, &versions); err != nil {
+		logger.Fatalf("Failed to parse embedded versions.json: %v\n", err)
+		return []string{}, err
+	}
+
+	return versions.Versions, nil
+}
+
 // printProgress prints the percentage of bytes read relative to total.
 func (pr *ProgressReader) printProgress() {
 	if pr.total <= 0 {
@@ -62,11 +75,11 @@ func (pr *ProgressReader) printProgress() {
 	fmt.Printf("\rDownloading: %.1f%% (%d / %d bytes)", percent, pr.bytesRead, pr.total)
 }
 
-// pickAlpineVersionInteractive shows a list of versions (first 10) and lets the user pick.
-func pickAlpineVersionInteractive(cfg AlpineConfig) string {
+// PickAlpineVersionInteractive shows a list of versions (first 10) and lets the user pick.
+func PickAlpineVersionInteractive(cfg AlpineVersions) string {
 	if len(cfg.Versions) == 0 {
 		logger.Println("No known Alpine versions in config. Please type one manually:")
-		return prompt("Alpine version: ")
+		return Prompt("Alpine version: ")
 	}
 
 	count := len(cfg.Versions)
@@ -79,10 +92,10 @@ func pickAlpineVersionInteractive(cfg AlpineConfig) string {
 		fmt.Printf("[%d] %s\n", i, cfg.Versions[i])
 	}
 	fmt.Println("[m] Enter manually")
-	choice := prompt("Select index or 'm': ")
+	choice := Prompt("Select index or 'm': ")
 
 	if choice == "m" {
-		manual := prompt("Type Alpine version manually (e.g. 3.18.2): ")
+		manual := Prompt("Type Alpine version manually (e.g. 3.18.2): ")
 		return strings.TrimSpace(manual)
 	}
 
@@ -94,9 +107,9 @@ func pickAlpineVersionInteractive(cfg AlpineConfig) string {
 	return cfg.Versions[idx]
 }
 
-// downloadAlpineRelease fetches the chosen Alpine release tarball, and extracts it to the cache dir.
+// DownloadAlpineRelease fetches the chosen Alpine release tarball, and extracts it to the cache dir.
 // This version prints progress for the download (by bytes) and also shows extraction progress by file count.
-func downloadAlpineRelease(version string) error {
+func DownloadAlpineRelease(cliName string, version string) error {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)
@@ -207,8 +220,8 @@ func downloadAlpineRelease(version string) error {
 	return nil
 }
 
-// processApkovl extracts the embedded apkovl tar, replaces placeholders, etc.
-func processApkovl(hostname, ssid, psk, shadowPass string) error {
+// ProcessApkovl extracts the embedded apkovl tar, replaces placeholders, etc.
+func ProcessApkovl(cliName, hostname, ssid, psk, shadowPass string) error {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)
@@ -380,8 +393,8 @@ func updatePlaceholdersInExtracted(extractDir, hostname, ssid, psk, shadowPass s
 	})
 }
 
-// buildImage copies Alpine data and creates a .tar.gz for the apkovl
-func buildImage(volumeDir string) error {
+// BuildImage copies Alpine data and creates a .tar.gz for the apkovl
+func BuildImage(cliName, volumeDir, hostname string) error {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)

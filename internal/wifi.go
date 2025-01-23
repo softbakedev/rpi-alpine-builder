@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bufio"
@@ -154,8 +154,8 @@ func getWifiWindows() (string, error) {
 	return "", errors.New("no connected Wi-Fi found on Windows")
 }
 
-// pickWifiNetwork orchestrates the OS-specific Wi-Fi scan, then prompts user to pick an SSID.
-func pickWifiNetwork() (string, error) {
+// PickWifiNetwork orchestrates the OS-specific Wi-Fi scan, then prompts user to pick an SSID.
+func PickWifiNetwork() (string, error) {
 	var ssids []string
 	var err error
 
@@ -182,7 +182,7 @@ func pickWifiNetwork() (string, error) {
 		fmt.Printf("Error scanning Wi-Fi networks: %v\n", err)
 
 		// If we can't detect or retrieve the current SSID, fallback to a manual entry:
-		return prompt("Enter Wi-Fi SSID: "), nil
+		return Prompt("Enter Wi-Fi SSID: "), nil
 	}
 
 	return promptForSSID(ssids)
@@ -257,21 +257,21 @@ func scanWifiWindows() ([]string, error) {
 func promptForSSID(ssids []string) (string, error) {
 	if len(ssids) == 0 {
 		logger.Println("No Wi-Fi networks found. Enter SSID manually:")
-		return prompt("Wi-Fi SSID: "), nil
+		return Prompt("Wi-Fi SSID: "), nil
 	}
 	fmt.Println("Available Wi-Fi networks:")
 	for i, ssid := range ssids {
 		fmt.Printf("[%d] %s\n", i, ssid)
 	}
 	fmt.Println("[m] Enter manually")
-	choice := prompt("Select index or 'm': ")
+	choice := Prompt("Select index or 'm': ")
 	if choice == "m" {
-		return prompt("Wi-Fi SSID (manual): "), nil
+		return Prompt("Wi-Fi SSID (manual): "), nil
 	}
 	idx, err := strconv.Atoi(choice)
 	if err != nil || idx < 0 || idx >= len(ssids) {
 		logger.Println("Invalid selection. Enter SSID manually:")
-		return prompt("Wi-Fi SSID: "), nil
+		return Prompt("Wi-Fi SSID: "), nil
 	}
 	return ssids[idx], nil
 }

@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bufio"
@@ -13,8 +13,8 @@ import (
 	"strings"
 )
 
-// listBlockDevices enumerates block devices per OS
-func listBlockDevices() ([]string, error) {
+// ListBlockDevices enumerates block devices per OS
+func ListBlockDevices() ([]string, error) {
 	switch runtime.GOOS {
 	case "linux":
 		return listBlockDevicesLinux()
@@ -79,19 +79,19 @@ func listBlockDevicesWindows() ([]string, error) {
 	return devices, nil
 }
 
-// pickDevices prompts user to pick from the discovered block devices
-func pickDevices(devices []string) ([]string, error) {
+// PickDevices prompts user to pick from the discovered block devices
+func PickDevices(devices []string) ([]string, error) {
 	logger.Println("\nAvailable block devices:")
 	for i, dev := range devices {
 		fmt.Printf("[%d] %s\n", i, dev)
 	}
 	logger.Println("[m] Enter manually or [x] Skip volumes")
-	choice := prompt("Select index(es), 'm', or 'x': ")
+	choice := Prompt("Select index(es), 'm', or 'x': ")
 	if choice == "x" {
 		return nil, nil
 	}
 	if choice == "m" {
-		path := prompt("Enter device path (e.g. /dev/sdb): ")
+		path := Prompt("Enter device path (e.g. /dev/sdb): ")
 		if strings.TrimSpace(path) == "" {
 			return nil, nil
 		}
@@ -164,8 +164,8 @@ func unmountMacOS(volume string) error {
 	return cmd.Run()
 }
 
-// formatVolumeFat32 formats the given volume with a FAT32 filesystem using go-diskfs
-func formatVolumeFat32(volumePath string) error {
+// FormatVolumeFat32 formats the given volume with a FAT32 filesystem using go-diskfs
+func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 	fmt.Println("Formatting volume as FAT32...")
 
 	devicePath, err := getDevicePath(volumePath)
