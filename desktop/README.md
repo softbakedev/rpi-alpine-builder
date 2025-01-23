@@ -21,14 +21,6 @@ This project uses `next export` to export the Next.js application to static HTML
 - NPM
 - [Wails CLI](https://wails.io/docs/next/gettingstarted/installation/)
 
-## New Project
-
-You can create a new wails project using:
-
-```bash
-wails init -n "Your Project Name" -t https://github.com/LGiki/wails-template-nextjs
-```
-
 ## Building
 
 If you modified the Go code, you need to run `wails generate module` to generate the wailsjs modules first. Then using `wails build` to build your application.
