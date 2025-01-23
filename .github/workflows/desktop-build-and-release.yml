@@ -48,19 +48,17 @@ jobs:
         run: |
           # Clean build: remove existing 'build' dir, then compile
           cd desktop
-          
-          wails build \
-            -clean \
-            -o rpialp-desktop
-
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            wails build -clean -o rpialp-desktop
             # Windows produces rpialp-desktop.exe by default
-            mv rpialp-desktop.exe rpialp-desktop-windows.exe
+            mv rpi-alpine-builder.exe rpialp-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            mv rpialp-desktop rpialp-desktop-macos
+            wails build -clean -o rpialp-desktop
+            mv rpi-alpine-builder rpialp-desktop-macos
           else
-            mv rpialp-desktop rpialp-desktop-linux
+            wails build -tags webkit2_41 -clean -o rpialp-desktop 
+            mv rpi-alpine-builder rpialp-desktop-linux
           fi
 
       - name: Upload Raw Binary Artifact
