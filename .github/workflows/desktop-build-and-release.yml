@@ -36,6 +36,7 @@ jobs:
       - name: Build Wails App
         run: |
           # Clean build: remove existing 'build' dir, then compile
+          cd desktop
           wails build \
             -clean \
             -o rpialp-desktop
