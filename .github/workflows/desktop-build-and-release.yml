@@ -35,6 +35,7 @@ jobs:
 
       - name: Build web client
         run: |
+          npm install next@latest react@latest react-dom@latest
           cd desktop/frontend
           npm run build
 
