@@ -37,6 +37,7 @@ jobs:
         run: |
           npm install next@latest react@latest react-dom@latest
           cd desktop/frontend
+          npm install
           npm run build
 
       - name: Install Wails
