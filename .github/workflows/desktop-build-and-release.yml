@@ -23,10 +23,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.3.0
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
+
+      - name: Build web client
+        run: |
+          cd desktop/frontend
+          npm run build
 
       - name: Install Wails
         run: |
@@ -36,6 +46,7 @@ jobs:
         run: |
           # Clean build: remove existing 'build' dir, then compile
           cd desktop
+          
           wails build \
             -clean \
             -o rpialp-desktop
