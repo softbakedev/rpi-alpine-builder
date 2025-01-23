@@ -30,8 +30,7 @@ jobs:
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2@latest
-          echo "::add-path::$(go env GOPATH)/bin"
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
         run: |
