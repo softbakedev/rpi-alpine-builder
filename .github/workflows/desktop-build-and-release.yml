@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest] #windows-latest, ubuntu-latest
         go-version: ['1.22.6']  # Adjust as needed
     steps:
       - name: Checkout code
@@ -54,26 +54,51 @@ jobs:
           cd desktop
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            wails build -clean -o rpialp-desktop
+            wails build -platform windows -clean -o rpialp-desktop
             # Windows produces rpialp-desktop.exe by default
             mv rpi-alpine-builder.exe rpialp-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            wails build -clean -o rpialp-desktop
-            mv rpi-alpine-builder rpialp-desktop-macos
+            wails build -platform darwin/universal -clean -o rpialp-desktop
           else
             wails build -tags webkit2_41 -clean -o rpialp-desktop 
-            mv rpi-alpine-builder rpialp-desktop-linux
           fi
 
-      - name: Upload Raw Binary Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create macOS DMG
+        if: matrix.os == 'macos-latest'
+        run: |
+          # The .app bundle is expected here:
+          # /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app
+          # Adjust if your .app is named or located differently.
+          echo "Creating DMG from .app bundle..."
+          ls -al /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin
+          
+          hdiutil create \
+            -volname "rpi-alpine-builder" \
+            -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
+            -ov \
+            -format UDZO "rpi-alpine-builder-macos.dmg"
+      - name: Rename or move build artifact
+        id: rename_build
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          # Windows binary -> rename from rpi-alpine-builder.exe
+          mv rpi-alpine-builder.exe rpi-alpine-builder-windows.exe
+          echo "::set-output name=artifact::rpi-alpine-builder-windows.exe"
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+          # We created a DMG above
+          echo "::set-output name=artifact::rpi-alpine-builder-macos.dmg"
+          else
+          # Linux binary
+          mv rpi-alpine-builder rpi-alpine-builder-linux
+          echo "::set-output name=artifact::rpi-alpine-builder-linux"
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: rpialp-desktop-${{ matrix.os }}
-          path: |
-            rpialp-desktop-windows.exe
-            rpialp-desktop-macos
-            rpialp-desktop-linux
-          if-no-files-found: ignore
+          name: rpi-alpine-builder-${{ matrix.os }}
+          path: ${{ steps.rename_build.outputs.artifact }}
+          if-no-files-found: error
 
   release:
     name: Create GitHub Release
@@ -87,19 +112,19 @@ jobs:
       - name: Download Windows Artifact
         uses: actions/download-artifact@v3
         with:
-          name: rpialp-desktop-windows
+          name: rpi-alpine-builder-windows
           path: ./artifacts/windows
 
       - name: Download macOS Artifact
         uses: actions/download-artifact@v3
         with:
-          name: rpialp-desktop-macos
+          name: rpi-alpine-builder-macos
           path: ./artifacts/macos
 
       - name: Download Linux Artifact
         uses: actions/download-artifact@v3
         with:
-          name: rpialp-desktop-linux
+          name: rpi-alpine-builder-ubuntu
           path: ./artifacts/linux
 
       - name: Create GitHub Release
@@ -109,36 +134,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: "rpialp-desktop Release ${{ github.ref_name }}"
+          release_name: "rpi-alpine-builder Release ${{ github.ref_name }}"
           draft: false
           prerelease: false
 
       - name: Upload Windows Asset
         uses: actions/upload-release-asset@v1
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/windows/rpialp-desktop-windows.exe
-          asset_name: rpialp-desktop-windows.exe
+          asset_path: ./artifacts/windows/rpi-alpine-builder-windows.exe
+          asset_name: rpi-alpine-builder-windows.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload macOS Asset
+      - name: Upload macOS DMG
         uses: actions/upload-release-asset@v1
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/macos/rpialp-desktop-macos
-          asset_name: rpialp-desktop-macos
+          asset_path: ./artifacts/macos/rpi-alpine-builder-macos.dmg
+          asset_name: rpi-alpine-builder-macos.dmg
           asset_content_type: application/octet-stream
 
-      - name: Upload Linux Asset
+      - name: Upload Linux Binary
         uses: actions/upload-release-asset@v1
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/linux/rpialp-desktop-linux
-          asset_name: rpialp-desktop-linux
+          asset_path: ./artifacts/linux/rpi-alpine-builder-linux
+          asset_name: rpi-alpine-builder-linux
           asset_content_type: application/octet-stream
