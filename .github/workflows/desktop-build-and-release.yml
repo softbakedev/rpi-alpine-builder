@@ -77,21 +77,6 @@ jobs:
             -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
             -ov \
             -format UDZO "rpi-alpine-builder-macos.dmg"
-      - name: Rename or move build artifact
-        id: rename_build
-        run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          # Windows binary -> rename from rpi-alpine-builder.exe
-          mv rpi-alpine-builder.exe rpi-alpine-builder-windows.exe
-          echo "::set-output name=artifact::rpi-alpine-builder-windows.exe"
-          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          # We created a DMG above
-          echo "::set-output name=artifact::rpi-alpine-builder-macos.dmg"
-          else
-          # Linux binary
-          mv rpi-alpine-builder rpi-alpine-builder-linux
-          echo "::set-output name=artifact::rpi-alpine-builder-linux"
-          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
