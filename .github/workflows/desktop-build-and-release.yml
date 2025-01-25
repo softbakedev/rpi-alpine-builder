@@ -68,13 +68,14 @@ jobs:
         run: |
           
           xattr -rc "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app"
-          codesign -s "Developer ID Application: Jan Vaca (softbake.dev)" /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
                     
           hdiutil create \
             -volname "rpi-alpine-builder" \
             -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
             -ov \
             -format UDZO "rpi-alpine-builder-macos.dmg"
+          
+          codesign -s "Developer ID Application: Jan Vaca (softbake.dev)" /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'macos-latest'
