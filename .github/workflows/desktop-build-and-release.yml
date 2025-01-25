@@ -71,7 +71,7 @@ jobs:
           # Adjust if your .app is named or located differently.
           echo "Creating DMG from .app bundle..."
           ls -al /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin
-          
+          xattr -rc "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app"
           hdiutil create \
             -volname "rpi-alpine-builder" \
             -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
