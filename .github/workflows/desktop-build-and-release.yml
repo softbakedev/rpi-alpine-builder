@@ -49,8 +49,8 @@ jobs:
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
-        working-directory: .${{ github.workspace }}/desktop
         run: |
+          cd desktop
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             wails build -platform windows -clean -webview2 download
@@ -76,10 +76,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'macos-latest'
-        working-directory: .${{ github.workspace }}/desktop
         with:
           name: rpi-alpine-builder-${{runner.os}}
           path: |
+            cd desktop
             mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
             build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
           if-no-files-found: error
