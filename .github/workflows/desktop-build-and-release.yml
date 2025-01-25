@@ -54,13 +54,13 @@ jobs:
           cd desktop
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            wails build -platform windows -clean -o rpialp-desktop
+            wails build -platform windows -clean -webview2 download -o rpialp-desktop
             # Windows produces rpialp-desktop.exe by default
             mv rpi-alpine-builder.exe rpialp-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            wails build -platform darwin/universal -clean -o rpialp-desktop
+            wails build -platform darwin/universal -webview2 download -clean -o rpialp-desktop
           else
-            wails build -tags webkit2_41 -clean -o rpialp-desktop 
+            wails build -tags webkit2_41 -clean -webview2 download -o rpialp-desktop 
           fi
 
       - name: Create macOS DMG
@@ -78,11 +78,12 @@ jobs:
             -ov \
             -format UDZO "rpi-alpine-builder-macos.dmg"
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'macos-latest'
         with:
-          name: rpi-alpine-builder-${{ matrix.os }}
-          path: ${{ steps.rename_build.outputs.artifact }}
+          name: rpi-alpine-builder-${{runner.os}}
+          path: |
+            /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
           if-no-files-found: error
 
   release:
