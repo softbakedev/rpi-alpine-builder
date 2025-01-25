@@ -78,6 +78,10 @@ jobs:
             -ov \
             -format UDZO "rpi-alpine-builder-macos.dmg"
 
+      - name: Sign MacOs dmg
+        run:
+          codesign -s "Developer ID Application: Jan Vaca (softbake.dev)" /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
+
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'macos-latest'
         with:
