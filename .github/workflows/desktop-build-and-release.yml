@@ -49,40 +49,39 @@ jobs:
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails App
+        working-directory: .${{ github.workspace }}/desktop
         run: |
-          # Clean build: remove existing 'build' dir, then compile
-          cd desktop
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             wails build -platform windows -clean -webview2 download
             # Windows produces rpialp-desktop.exe by default
-            mv rpi-alpine-builder.exe rpialp-desktop-windows.exe
+#            mv build/rpi-alpine-builder.exe rpialp-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             wails build -platform darwin/universal -webview2 download -clean
           else
             wails build -tags webkit2_41 -clean -webview2 download
           fi
 
-      - name: Create macOS DMG
-        if: matrix.os == 'macos-latest'
-        run: |
-          
-          xattr -rc "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app"
-                    
-          hdiutil create \
-            -volname "rpi-alpine-builder" \
-            -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
-            -ov \
-            -format UDZO "rpi-alpine-builder-macos.dmg"
-          
-          codesign -s "Developer ID Application: Jan Vaca (softbake.dev)" /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
+#      - name: Create macOS DMG
+#        if: matrix.os == 'macos-latest'
+#        run: |
+#
+#          xattr -rc "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app"
+#
+#          hdiutil create \
+#            -volname "rpi-alpine-builder" \
+#            -srcfolder "/Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/desktop/build/bin/rpi-alpine-builder.app" \
+#            -ov \
+#            -format UDZO "rpi-alpine-builder-macos.dmg"
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'macos-latest'
+        working-directory: .${{ github.workspace }}/desktop
         with:
           name: rpi-alpine-builder-${{runner.os}}
           path: |
-            /Users/runner/work/rpi-alpine-builder/rpi-alpine-builder/rpi-alpine-builder-macos.dmg
+            mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
+            build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
           if-no-files-found: error
 
   release:
@@ -141,7 +140,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/macos/rpi-alpine-builder-macos.dmg
+          asset_path: ./artifacts/macos/rpi-alpine-builder-macos
           asset_name: rpi-alpine-builder-macos.dmg
           asset_content_type: application/octet-stream
 
