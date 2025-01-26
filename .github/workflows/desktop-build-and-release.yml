@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest] #macos-latest, windows-latest, ubuntu-latest
+        os: [ubuntu-latest] #macos-latest, windows-latest, ubuntu-latest
         go-version: ['1.22.6']  # Adjust as needed
     steps:
       - name: Checkout code
@@ -61,6 +61,7 @@ jobs:
             mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop-macos
           else
             wails build -tags webkit2_41 -clean -webview2 download
+            mv build/bin/rpi-alpine-builder build/bin/rpi-alpine-builder-desktop-linux
           fi
 
 #      - name: Create macOS DMG
@@ -89,6 +90,15 @@ jobs:
           name: rpi-alpine-builder-desktop-windows
           path: |
             desktop/build/bin/rpi-alpine-builder-desktop-windows.exe
+          if-no-files-found: error
+
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: rpi-alpine-builder-desktop-linux
+          path: |
+            desktop/build/bin/rpi-alpine-builder-desktop-linux
           if-no-files-found: error
 
   release:
