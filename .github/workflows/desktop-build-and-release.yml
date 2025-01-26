@@ -55,11 +55,10 @@ jobs:
           # Rename the final binary based on OS
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             wails build -platform windows -clean -webview2 download
-            mv build/bin/rpi-alpine-builder.app/Contents/Windows/rpi-alpine-builder.exe build/bin/rpi-alpine-builder.app/Contents/Windows/rpi-alpine-builder-desktop-windows.exe
+            mv build/bin/rpi-alpine-builder.exe build/bin/rpi-alpine-builder-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             wails build -platform darwin/universal -webview2 download -clean
             mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop-macos
-            ls -a build/bin/rpi-alpine-builder.app/Contents/MacOS
           else
             wails build -tags webkit2_41 -clean -webview2 download
           fi
@@ -79,7 +78,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'macos-latest'
         with:
-          name: rpi-alpine-builder-macos
+          name: rpi-alpine-builder-dekstop-macos
           path: |
             desktop/build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop-macos
           if-no-files-found: error
@@ -87,9 +86,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'windows-latest'
         with:
-          name: rpi-alpine-builder-windows
+          name: rpi-alpine-builder-desktop-windows
           path: |
-            desktop/build/bin/rpi-alpine-builder.app/Contents/Windows/rpi-alpine-builder-desktop-windows.exe
+            build/bin/rpi-alpine-builder-desktop-windows.exe
           if-no-files-found: error
 
   release:
