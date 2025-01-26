@@ -12,16 +12,51 @@ for Raspberry PI devices. It should provide easier way of deployment.
 ## Using CLI
 First build cmd tool by:
 
-``` go build -o  ./build/rpialp .  ```
+``` go build -o ./build/rpialp .  ```
 
 Run command (command must be run as sudo):
 
-``` sudo ./build/rpialp build  ```
+``` ./build/rpialp build  ```
 
 Help command:
 
-``` sudo ./build/rpialp --help  ```
+``` ./build/rpialp --help  ```
 
 ## Using desktop app
 
-Visit tho docs [here](desktop/README.md)
+To get the app first visit the releases. Then download the base on your platform. 
+More info about the development visit tho docs [here](desktop/README.md)
+
+### MacOS
+
+First unzip the file:
+
+``` unzip <download-path>/rpi-alpine-builder-desktop-macos  ```
+
+Open the terminal and run the binary from command line
+
+``` <download-path>/rpi-alpine-builder-desktop-macos  ```
+
+#### Permission issue 
+
+If you are facing issue with the verification of *rpi-alpine-builder-desktop-macos* 
+then you have to allow in System Settings -> Security and privacy and here you should enable
+to open *rpi-alpine-builder-desktop-macos*
+
+### Windows
+
+> TODO - not yet test it
+ 
+First unzip the file and run the exe file *rpi-alpine-builder-desktop-windows.exe*
+
+### Linux
+
+> TODO - not yet test it
+
+First unzip the file:
+
+``` unzip <download-path>/rpi-alpine-builder-desktop-linux  ```
+
+Open the terminal and run the binary from command line
+
+``` <download-path>/rpi-alpine-builder-desktop-linux  ```
