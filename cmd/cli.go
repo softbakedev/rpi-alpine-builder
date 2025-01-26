@@ -15,6 +15,7 @@ var (
 	volumeSizeMg  int    = 4096
 	volumeLabel   string = "ALPINE"
 	cliName       string = "rpialp"
+	cacheFolder   string = fmt.Sprintf(".%s", cliName)
 	hostname      string
 	ssid          string
 	ssidPass      string
@@ -80,7 +81,7 @@ var buildCmd = &cobra.Command{
 		// 2. Download the Alpine release
 		if strings.TrimSpace(alpineVersion) != "" {
 			fmt.Printf("Alpine version selected: %s. Downloading (if not cached)...\n", alpineVersion)
-			if err := internal.DownloadAlpineRelease(cliName, alpineVersion); err != nil {
+			if err := internal.DownloadAlpineRelease(cacheFolder, alpineVersion); err != nil {
 				return fmt.Errorf("failed downloading Alpine release: %v", err)
 			}
 		}
@@ -121,7 +122,7 @@ var buildCmd = &cobra.Command{
 		}
 
 		// 7. Process the apkovl
-		if err := internal.ProcessApkovl(cliName, hostname, ssid, ssidPsk, shadowPass); err != nil {
+		if err := internal.ProcessApkovl(cacheFolder, hostname, ssid, ssidPsk, shadowPass); err != nil {
 			return fmt.Errorf("failed to process apkovl tar file %v", err)
 		}
 
@@ -145,7 +146,7 @@ var buildCmd = &cobra.Command{
 				return fmt.Errorf("error format fat32 volume %s: %v", chosen[0], err)
 			}
 			// Build the image
-			if err = internal.BuildImage(cliName, chosen[0], hostname); err != nil {
+			if err = internal.BuildImage(cacheFolder, chosen[0], hostname); err != nil {
 				return fmt.Errorf("error build image in volume %s: %v", chosen[0], err)
 			}
 		} else {

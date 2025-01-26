@@ -110,7 +110,7 @@ func PickAlpineVersionInteractive(cfg AlpineVersions) string {
 // DownloadAlpineRelease fetches the chosen Alpine release tarball, and extracts it to the cache dir.
 // This version prints progress for the download (by bytes) and also shows extraction progress by file count.
 func DownloadAlpineRelease(cliName string, version string) error {
-	cacheDir, err := os.UserCacheDir()
+	cacheDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)
 	}
@@ -222,7 +222,7 @@ func DownloadAlpineRelease(cliName string, version string) error {
 
 // ProcessApkovl extracts the embedded apkovl tar, replaces placeholders, etc.
 func ProcessApkovl(cliName, hostname, ssid, psk, shadowPass string) error {
-	cacheDir, err := os.UserCacheDir()
+	cacheDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)
 	}
@@ -395,7 +395,7 @@ func updatePlaceholdersInExtracted(extractDir, hostname, ssid, psk, shadowPass s
 
 // BuildImage copies Alpine data and creates a .tar.gz for the apkovl
 func BuildImage(cliName, volumeDir, hostname string) error {
-	cacheDir, err := os.UserCacheDir()
+	cacheDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user cache directory: %v", err)
 	}

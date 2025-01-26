@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	AppName             = "rpialp"
+	CacheFolder         = ".rpialp"
 	VolumeLabel  string = "ALPINE"
 	VolumeSizeMg int    = 4096
 )
@@ -202,7 +202,7 @@ func (a *App) handleBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Example: Proceed with your application logic
-	if err := internal.DownloadAlpineRelease(AppName, rpiAlpineParams.Version); err != nil {
+	if err := internal.DownloadAlpineRelease(CacheFolder, rpiAlpineParams.Version); err != nil {
 		log.Printf("Error: %v", err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed downloading Alpine release: %v", err))
 		return
@@ -221,7 +221,7 @@ func (a *App) handleBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := internal.ProcessApkovl(AppName, rpiAlpineParams.Hostname, rpiAlpineParams.WifiNetwork, ssidPsk, shadowPass); err != nil {
+	if err := internal.ProcessApkovl(CacheFolder, rpiAlpineParams.Hostname, rpiAlpineParams.WifiNetwork, ssidPsk, shadowPass); err != nil {
 		log.Printf("Error processing APKOVL: %v", err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to process APKOVL tar file: %v", err))
 		return
@@ -233,7 +233,7 @@ func (a *App) handleBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = internal.BuildImage(AppName, rpiAlpineParams.VolumeDirectory, rpiAlpineParams.Hostname); err != nil {
+	if err = internal.BuildImage(CacheFolder, rpiAlpineParams.VolumeDirectory, rpiAlpineParams.Hostname); err != nil {
 		log.Printf("Error building image: %v", err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error building image in volume %s: %v", rpiAlpineParams.VolumeDirectory, err))
 		return

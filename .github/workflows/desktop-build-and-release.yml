@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest] #macos-latest, windows-latest, ubuntu-latest
+        os: [macos-latest, windows-latest, ubuntu-latest]
         go-version: ['1.22.6']  # Adjust as needed
     steps:
       - name: Checkout code
