@@ -88,7 +88,7 @@ jobs:
         with:
           name: rpi-alpine-builder-desktop-windows
           path: |
-            build/bin/rpi-alpine-builder-desktop-windows.exe
+            desktop/build/bin/rpi-alpine-builder-desktop-windows.exe
           if-no-files-found: error
 
   release:
