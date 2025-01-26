@@ -55,7 +55,6 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             wails build -platform windows -clean -webview2 download
             # Windows produces rpialp-desktop.exe by default
-#            mv build/rpi-alpine-builder.exe rpialp-desktop-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             wails build -platform darwin/universal -webview2 download -clean
           else
