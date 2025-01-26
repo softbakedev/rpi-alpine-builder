@@ -57,6 +57,7 @@ jobs:
             # Windows produces rpialp-desktop.exe by default
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             wails build -platform darwin/universal -webview2 download -clean
+            mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
           else
             wails build -tags webkit2_41 -clean -webview2 download
           fi
@@ -78,8 +79,6 @@ jobs:
         with:
           name: rpi-alpine-builder-${{runner.os}}
           path: |
-            cd desktop
-            mv build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
             build/bin/rpi-alpine-builder.app/Contents/MacOS/rpi-alpine-builder-desktop
           if-no-files-found: error
 
