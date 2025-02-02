@@ -10,11 +10,12 @@ for Raspberry PI devices. It should provide easier way of deployment.
 # Getting started
 
 ## Using CLI
+
 First build cmd tool by:
 
-``` go build -o ./build/rpialp .  ```
+``` go build -o ./build/rpialp ./cmd/cli.go  ```
 
-Run command (command must be run as sudo):
+Run command:
 
 ``` ./build/rpialp build  ```
 

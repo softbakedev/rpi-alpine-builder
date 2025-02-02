@@ -80,13 +80,12 @@ func listBlockDevicesWindows() ([]string, error) {
 }
 
 // PickDevices prompts user to pick from the discovered block devices
-func PickDevices(devices []string) ([]string, error) {
+func PickDevices(devices []string) (*string, error) {
 	logger.Println("\nAvailable block devices:")
 	for i, dev := range devices {
 		fmt.Printf("[%d] %s\n", i, dev)
 	}
-	logger.Println("[m] Enter manually or [x] Skip volumes")
-	choice := Prompt("Select index(es), 'm', or 'x': ")
+	choice := Prompt("[m] Enter manually or [x] Skip volumes: ")
 	if choice == "x" {
 		return nil, nil
 	}
@@ -95,7 +94,7 @@ func PickDevices(devices []string) ([]string, error) {
 		if strings.TrimSpace(path) == "" {
 			return nil, nil
 		}
-		return []string{path}, nil
+		return &path, nil
 	}
 
 	var selected []string
@@ -109,7 +108,7 @@ func PickDevices(devices []string) ([]string, error) {
 		}
 		selected = append(selected, devices[idx])
 	}
-	return selected, nil
+	return &selected[0], nil
 }
 
 // unmountDevice unmounts the given device using external commands based on the OS.

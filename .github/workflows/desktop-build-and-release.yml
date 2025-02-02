@@ -1,4 +1,4 @@
-name: Build and Release rpialp-desktop
+name: Build and Release rpi-alpine-builder-desktop
 
 on:
   # Triggers on pushes to main and desktop-client

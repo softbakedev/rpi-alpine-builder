@@ -127,7 +127,8 @@ func DownloadAlpineRelease(cliName string, version string) error {
 	// Build the URL (example for aarch64)
 	firstVersion := fmt.Sprintf("%s.%s", strings.Split(version, ".")[0], strings.Split(version, ".")[1])
 	url := fmt.Sprintf("https://dl-cdn.alpinelinux.org/alpine/v%s/releases/aarch64/alpine-rpi-%s-aarch64.tar.gz", firstVersion, version)
-	fmt.Printf("Downloading Alpine from URL: %s\n", url)
+
+	logger.Printf("Downloading Alpine from URL: %s\n", url)
 
 	// Initiate HTTP request
 	resp, err := http.Get(url)
@@ -155,18 +156,8 @@ func DownloadAlpineRelease(cliName string, version string) error {
 	}
 	defer gzReader.Close()
 
-	// Wrap response body with a progressReader for download progress
-	pReader := &ProgressReader{
-		Reader: gzReader,
-		total:  totalSize,
-	}
-
 	// Read the tar
-	tarReader := tar.NewReader(pReader)
-
-	// For optional extraction progress
-	var fileCount int64
-	var extractedCount int64
+	tarReader := tar.NewReader(gzReader)
 
 	// We can do a quick scan of the tar to count total files for progress, if we want.
 	// A better way is to read the tar twice (inefficient) or store headers, but let's keep it simple:
@@ -187,7 +178,6 @@ func DownloadAlpineRelease(cliName string, version string) error {
 			return fmt.Errorf("error reading tar entry: %v", err)
 		}
 
-		fileCount++
 		targetPath := filepath.Join(myCacheDir, header.Name)
 
 		switch header.Typeflag {
@@ -209,14 +199,8 @@ func DownloadAlpineRelease(cliName string, version string) error {
 			// We will just ignore other types
 			fmt.Printf("Skipping unsupported file type: %s\n", header.Name)
 		}
-		extractedCount++
-
-		// If we want to show extraction progress in terms of number of files:
-		fmt.Printf("\rExtracting file %d...", extractedCount)
 	}
-
-	fmt.Println()
-	fmt.Println("Download and extraction completed successfully!")
+	logger.Println("Download and extraction completed successfully!")
 	return nil
 }
 
@@ -290,7 +274,7 @@ func extractTarToDir(tarData []byte, destDir string) error {
 				return fmt.Errorf("creating symlink %s -> %s: %v", targetPath, header.Linkname, err)
 			}
 		default:
-			fmt.Printf("Skipping unsupported file type: %s (typeflag=%d)\n", header.Name, header.Typeflag)
+			logger.Printf("Skipping unsupported file type: %s (typeflag=%d)\n", header.Name, header.Typeflag)
 		}
 	}
 	return nil
@@ -413,6 +397,6 @@ func BuildImage(cliName, volumeDir, hostname string) error {
 		return fmt.Errorf("failed to compress apkovl data: %v", err)
 	}
 
-	fmt.Printf("apkovl.tar.gz created successfully at %s\n", tarGzPath)
+	logger.Printf("apkovl.tar.gz created successfully at %s\n", tarGzPath)
 	return nil
 }

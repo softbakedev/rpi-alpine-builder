@@ -10,7 +10,7 @@ This project uses `next export` to export the Next.js application to static HTML
 
 # Screenshot
 
-![](screenshot.png)
+![](../docs/assets/img_01.png)
 
 # Getting Started
 

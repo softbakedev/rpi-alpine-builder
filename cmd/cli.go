@@ -67,12 +67,12 @@ var rootCmd = &cobra.Command{
 // buildCmd is the subcommand that handles the "build" logic
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Builds the Alpine release image with specified configuration.",
+	Short: "Builds the Alpine release image with specified configuration for Raspberry Pi",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		// Turn on verbose logging if --verbose / -v was provided
 		internal.EnableVerboseLogging(verbose)
-
+		spinner := internal.NewSpinner()
 		// 1. If user did NOT specify --alpine-version, prompt from embedded config
 		if strings.TrimSpace(alpineVersion) == "" {
 			alpineVersion = internal.PickAlpineVersionInteractive(alpineVersions)
@@ -80,11 +80,15 @@ var buildCmd = &cobra.Command{
 
 		// 2. Download the Alpine release
 		if strings.TrimSpace(alpineVersion) != "" {
+			spinner.Start()
 			fmt.Printf("Alpine version selected: %s. Downloading (if not cached)...\n", alpineVersion)
 			if err := internal.DownloadAlpineRelease(cacheFolder, alpineVersion); err != nil {
+				spinner.Stop()
 				return fmt.Errorf("failed downloading Alpine release: %v", err)
 			}
 		}
+
+		spinner.Stop()
 
 		// 3. Prompt for hostname if not provided
 		if strings.TrimSpace(hostname) == "" {
@@ -95,11 +99,17 @@ var buildCmd = &cobra.Command{
 		}
 
 		// 4. Pick a Wi-Fi network
+		spinner.Start()
 		if strings.TrimSpace(ssid) == "" {
-			ssid, err = internal.PickWifiNetwork()
+			fmt.Printf("Finding available wifi around")
+			ssids, err := internal.PickWifiNetwork()
+
 			if err != nil {
+				spinner.Stop()
 				return fmt.Errorf("error picking Wi-Fi network: %v", err)
 			}
+			spinner.Stop()
+			internal.PromptForSSID(ssids)
 		}
 
 		// 5. Prompt for Wi-Fi passphrase => derive WPA2-PSK
@@ -122,9 +132,13 @@ var buildCmd = &cobra.Command{
 		}
 
 		// 7. Process the apkovl
+		spinner.Start()
 		if err := internal.ProcessApkovl(cacheFolder, hostname, ssid, ssidPsk, shadowPass); err != nil {
+			spinner.Stop()
 			return fmt.Errorf("failed to process apkovl tar file %v", err)
 		}
+
+		spinner.Stop()
 
 		// 8. List block devices
 		devices, err := internal.ListBlockDevices()
@@ -132,7 +146,7 @@ var buildCmd = &cobra.Command{
 			return fmt.Errorf("failed listing block devices: %v", err)
 		}
 
-		var chosen []string
+		var chosen *string
 		if len(devices) > 0 {
 			chosen, err = internal.PickDevices(devices)
 			if err != nil {
@@ -140,18 +154,24 @@ var buildCmd = &cobra.Command{
 			}
 		}
 
-		if len(chosen) > 0 {
+		if chosen != nil {
+			spinner.Start()
 			// Format FAT32
-			if err = internal.FormatVolumeFat32(chosen[0], volumeLabel, volumeSizeMg); err != nil {
-				return fmt.Errorf("error format fat32 volume %s: %v", chosen[0], err)
+			if err = internal.FormatVolumeFat32(*chosen, volumeLabel, volumeSizeMg); err != nil {
+				spinner.Stop()
+				return fmt.Errorf("error format fat32 volume %s: %v", *chosen, err)
 			}
 			// Build the image
-			if err = internal.BuildImage(cacheFolder, chosen[0], hostname); err != nil {
-				return fmt.Errorf("error build image in volume %s: %v", chosen[0], err)
+			if err = internal.BuildImage(cacheFolder, *chosen, hostname); err != nil {
+				spinner.Stop()
+				return fmt.Errorf("error build image in volume %s: %v", *chosen, err)
 			}
 		} else {
 			return fmt.Errorf("the volume cannot be empty")
 		}
+
+		spinner.Stop()
+
 		return nil
 	},
 }

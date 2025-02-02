@@ -155,7 +155,7 @@ func getWifiWindows() (string, error) {
 }
 
 // PickWifiNetwork orchestrates the OS-specific Wi-Fi scan, then prompts user to pick an SSID.
-func PickWifiNetwork() (string, error) {
+func PickWifiNetwork() ([]string, error) {
 	var ssids []string
 	var err error
 
@@ -167,25 +167,25 @@ func PickWifiNetwork() (string, error) {
 	case "windows":
 		ssids, err = scanWifiWindows()
 	default:
-		return "", fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+		return nil, fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
 
 	if err != nil {
 		// Try to get the SSID of the currently connected network:
 		connectedSSID, errConn := getCurrentlyConnectedWifi()
 		if errConn == nil && connectedSSID != "" {
-			fmt.Printf("Detected currently connected Wi-Fi: %s\n", connectedSSID)
+			logger.Printf("Detected currently connected Wi-Fi: %s\n", connectedSSID)
 			// Prompt user with the connected SSID as the default
-			return promptWithDefault("Enter Wi-Fi SSID", connectedSSID), nil
+			return []string{connectedSSID}, nil //promptWithDefault("Enter Wi-Fi SSID", connectedSSID), nil
 		}
 
-		fmt.Printf("Error scanning Wi-Fi networks: %v\n", err)
+		logger.Printf("Error scanning Wi-Fi networks: %v\n", err)
 
 		// If we can't detect or retrieve the current SSID, fallback to a manual entry:
-		return Prompt("Enter Wi-Fi SSID: "), nil
+		return nil, nil //Prompt("Enter Wi-Fi SSID: "), nil
 	}
 
-	return promptForSSID(ssids)
+	return ssids, nil
 }
 
 // promptWithDefault prints a prompt and includes a default value. If the user just hits Enter,
@@ -254,24 +254,27 @@ func scanWifiWindows() ([]string, error) {
 	return ssids, nil
 }
 
-func promptForSSID(ssids []string) (string, error) {
+func PromptForSSID(ssids []string) (string, error) {
 	if len(ssids) == 0 {
 		logger.Println("No Wi-Fi networks found. Enter SSID manually:")
 		return Prompt("Wi-Fi SSID: "), nil
+	} else if len(ssids) == 1 {
+		return promptWithDefault("Enter Wi-Fi SSID", ssids[0]), nil
+	} else {
+		fmt.Println("Available Wi-Fi networks:")
+		for i, ssid := range ssids {
+			fmt.Printf("[%d] %s\n", i, ssid)
+		}
+		fmt.Println("[m] Enter manually")
+		choice := Prompt("Select index or 'm': ")
+		if choice == "m" {
+			return Prompt("Wi-Fi SSID (manual): "), nil
+		}
+		idx, err := strconv.Atoi(choice)
+		if err != nil || idx < 0 || idx >= len(ssids) {
+			logger.Println("Invalid selection. Enter SSID manually:")
+			return Prompt("Wi-Fi SSID: "), nil
+		}
+		return ssids[idx], nil
 	}
-	fmt.Println("Available Wi-Fi networks:")
-	for i, ssid := range ssids {
-		fmt.Printf("[%d] %s\n", i, ssid)
-	}
-	fmt.Println("[m] Enter manually")
-	choice := Prompt("Select index or 'm': ")
-	if choice == "m" {
-		return Prompt("Wi-Fi SSID (manual): "), nil
-	}
-	idx, err := strconv.Atoi(choice)
-	if err != nil || idx < 0 || idx >= len(ssids) {
-		logger.Println("Invalid selection. Enter SSID manually:")
-		return Prompt("Wi-Fi SSID: "), nil
-	}
-	return ssids[idx], nil
 }
