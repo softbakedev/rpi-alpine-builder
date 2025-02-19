@@ -180,23 +180,27 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 	switch runtime.GOOS {
 	case "windows":
 		// On Windows, devicePath is the drive letter (e.g., "E:")
-		// Use the format command:
-		// /FS:FAT32 -> format as FAT32
-		// /Q       -> quick format
-		// /A:4096  -> allocation unit size (4096 bytes)
-		// /V:MyVol -> volume label
-		// Automate "Yes" prompt by piping "Y"
+		// Format-Volume parameters:
+		//   -DriveLetter           -> the drive letter (without the colon)
+		//   -FileSystem FAT32      -> file system type
+		//   -NewFileSystemLabel ... -> volume label
+		//   -AllocationUnitSize ... -> allocation unit size (in bytes)
+		//   -Confirm:$false        -> bypass confirmation prompt
 		fmt.Printf("Formatting volume %s (Windows)...\n", devicePath)
 
-		// Prepare the command
-		cmd := exec.Command("cmd", "/C", fmt.Sprintf("echo Y | format %s /FS:FAT32 /Q /A:%d %S", devicePath, volumeSizeMg, volumeLabel))
+		// Extract the drive letter (remove the colon if present).
+		driveLetter := strings.TrimSuffix(devicePath, ":")
 
-		// Redirect output
+		// Build the PowerShell command string.
+		psCmd := fmt.Sprintf("Format-Volume -DriveLetter %s -FileSystem FAT32 -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false", driveLetter, volumeLabel, volumeSizeMg)
+
+		// Prepare the command using PowerShell.
+		cmd := exec.Command("powershell", "-Command", psCmd)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("Error formatting volume %s: %v\n", devicePath, err)
+			return fmt.Errorf("Error formatting volume %s: %v", devicePath, err)
 		}
 		fmt.Println("Format completed successfully.")
 
