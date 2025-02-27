@@ -79,7 +79,7 @@ func main() {
 			},
 		},
 		Debug: options.Debug{
-			OpenInspectorOnStartup: false,
+			OpenInspectorOnStartup: true,
 		},
 	})
 

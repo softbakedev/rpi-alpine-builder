@@ -132,11 +132,10 @@ func unmountWindows(volume string) error {
 	psCommand := fmt.Sprintf("Dismount-Volume -DriveLetter %s -Force", driveLetter)
 
 	// Prepare PowerShell command
-	cmd := exec.Command("powershell",
-		"-NoProfile",
-		"-NonInteractive",
-		"-WindowStyle", "Hidden",
-		"-Command", psCommand,
+	cmd := exec.Command("powershell.exe",
+		"-nologo",
+		"-windowstyle", "Hidden",
+		"-command", psCommand,
 	)
 
 	//// Prevent spawning a new PowerShell window
@@ -189,15 +188,14 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 			driveLetter, volumeLabel, volumeSizeMg)
 
 		// Build the PowerShell command
-		cmd := exec.Command("powershell",
-			"-NoProfile",
-			"-NonInteractive",
-			"-WindowStyle", "Hidden",
-			"-Command", psCmd,
+		cmd := exec.Command("powershell.exe",
+			"-nologo",
+			"-windowstyle", "Hidden",
+			"-command", psCmd,
 		)
 
 		// Hide the window
-		//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		//cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 
 		// (Optional) Capture or redirect output
 		cmd.Stdout = os.Stdout
