@@ -125,14 +125,24 @@ func unmountDevice(volume string) error {
 	}
 }
 
-// unmountWindows unmounts the volume on Windows using PowerShell commands.
+// unmountWindows unmounts the volume on Windows using PowerShell commands,
+// but prevents a window from being shown by setting HideWindow = true.
 func unmountWindows(volume string) error {
-	// Use PowerShell to dismount the volume
-	// The command "Dismount-Volume -DriveLetter E" can be used
 	driveLetter := strings.TrimSuffix(volume, ":")
-	cmd := exec.Command("powershell", "-Command", fmt.Sprintf("Dismount-Volume -DriveLetter %s -Force", driveLetter))
+	psCommand := fmt.Sprintf("Dismount-Volume -DriveLetter %s -Force", driveLetter)
 
-	// Redirect output
+	// Prepare PowerShell command
+	cmd := exec.Command("powershell",
+		"-NoProfile",
+		"-NonInteractive",
+		"-WindowStyle", "Hidden",
+		"-Command", psCommand,
+	)
+
+	//// Prevent spawning a new PowerShell window
+	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	// (Optional) Redirect output to see errors in your main console or logs
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -141,29 +151,21 @@ func unmountWindows(volume string) error {
 
 // unmountLinux unmounts the volume on Linux using the 'umount' command.
 func unmountLinux(volume string) error {
-	// Use the 'umount' command
 	cmd := exec.Command("umount", volume)
-
-	// Redirect output
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
 // unmountMacOS unmounts the volume on macOS using the 'diskutil unmount' command.
 func unmountMacOS(volume string) error {
-	// Use diskutil to unmount the volume
 	cmd := exec.Command("diskutil", "unmount", volume)
-
-	// Redirect output
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
-// FormatVolumeFat32 formats the given volume with a FAT32 filesystem using go-diskfs
+// FormatVolumeFat32 formats the given volume with a FAT32 filesystem
 func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 	fmt.Println("Formatting volume as FAT32...")
 
@@ -176,26 +178,28 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 		return fmt.Errorf("error unmount device %v", err)
 	}
 
-	// Proceed to format the device
 	switch runtime.GOOS {
 	case "windows":
-		// On Windows, devicePath is the drive letter (e.g., "E:")
-		// Format-Volume parameters:
-		//   -DriveLetter           -> the drive letter (without the colon)
-		//   -FileSystem FAT32      -> file system type
-		//   -NewFileSystemLabel ... -> volume label
-		//   -AllocationUnitSize ... -> allocation unit size (in bytes)
-		//   -Confirm:$false        -> bypass confirmation prompt
+		// On Windows, devicePath is the drive letter (e.g. "E:")
 		fmt.Printf("Formatting volume %s (Windows)...\n", devicePath)
 
 		// Extract the drive letter (remove the colon if present).
 		driveLetter := strings.TrimSuffix(devicePath, ":")
+		psCmd := fmt.Sprintf("Format-Volume -DriveLetter %s -FileSystem FAT32 -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false",
+			driveLetter, volumeLabel, volumeSizeMg)
 
-		// Build the PowerShell command string.
-		psCmd := fmt.Sprintf("Format-Volume -DriveLetter %s -FileSystem FAT32 -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false", driveLetter, volumeLabel, volumeSizeMg)
+		// Build the PowerShell command
+		cmd := exec.Command("powershell",
+			"-NoProfile",
+			"-NonInteractive",
+			"-WindowStyle", "Hidden",
+			"-Command", psCmd,
+		)
 
-		// Prepare the command using PowerShell.
-		cmd := exec.Command("powershell", "-Command", psCmd)
+		// Hide the window
+		//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+		// (Optional) Capture or redirect output
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
@@ -205,46 +209,31 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 		fmt.Println("Format completed successfully.")
 
 	case "linux":
-		// On Linux, devicePath is like "/dev/sdb1"
 		fmt.Printf("Formatting volume %s (Linux)...\n", devicePath)
-
-		// Use mkfs.vfat to format
-		// -F 32    -> FAT32
-		// -I       -> force
-		// -S 4096  -> logical sector size (Note: Not all mkfs.vfat versions support -S)
-		// -n "MyVol" -> volume label
 		cmd := exec.Command("mkfs.vfat", "-F", "32", "-I", "-S", strconv.Itoa(volumeSizeMg), "-n", volumeLabel, devicePath)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("Error formatting volume %s: %v\n", devicePath, err)
 		}
 		fmt.Println("Format completed successfully.")
 
 	case "darwin":
-		// On macOS, devicePath is like "/dev/disk2"
 		fmt.Printf("Formatting volume %s (macOS)...\n", devicePath)
 
-		// Prepare the diskutil eraseVolume command arguments
 		args := []string{
 			"eraseVolume",
 			"FAT32",     // Filesystem type
 			volumeLabel, // Volume label
-			devicePath,  // Volume path
+			devicePath,
 		}
-
 		cmd := exec.Command("diskutil", args...)
-
-		// Capture and log the output
 		var stdoutBuf, stderrBuf bytes.Buffer
 		cmd.Stdout = &stdoutBuf
 		cmd.Stderr = &stderrBuf
-
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("diskutil eraseVolume failed: %v\nStderr: %s", err, stderrBuf.String())
 		}
-
 		fmt.Println("Format completed successfully.")
 
 	default:
@@ -268,7 +257,7 @@ func getDevicePath(volume string) (string, error) {
 	}
 }
 
-// Windows: Returns the drive letter (e.g., "E:") as the device path.
+// Windows: Return the drive letter itself
 func getWindowsDevicePath(volume string) (string, error) {
 	vol := strings.ToUpper(volume)
 	if len(vol) < 2 || vol[1] != ':' {
@@ -277,7 +266,7 @@ func getWindowsDevicePath(volume string) (string, error) {
 	return vol, nil
 }
 
-// Linux: Parses /proc/mounts to find the device for the given mount point or label.
+// Linux: Parse /proc/mounts or blkid
 func getLinuxDevicePath(volume string) (string, error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
@@ -297,23 +286,20 @@ func getLinuxDevicePath(volume string) (string, error) {
 			return device, nil
 		}
 	}
-
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("error reading /proc/mounts: %v", err)
 	}
 
-	// If not found by mount point, attempt to find by label using blkid
+	// Attempt label-based resolution via blkid
 	cmd := exec.Command("blkid", "-L", volume)
 	output, err := cmd.Output()
 	if err == nil {
-		devPath := strings.TrimSpace(string(output))
-		return devPath, nil
+		return strings.TrimSpace(string(output)), nil
 	}
-
 	return "", fmt.Errorf("could not find device for volume: %s", volume)
 }
 
-// macOS: Uses diskutil to find the device associated with the mount point or volume name.
+// macOS: Use diskutil
 func getMacOSDevicePath(volume string) (string, error) {
 	cmd := exec.Command("diskutil", "info", volume)
 	output, err := cmd.Output()
@@ -332,7 +318,6 @@ func getMacOSDevicePath(volume string) (string, error) {
 			}
 		}
 	}
-
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("error parsing diskutil output: %v", err)
 	}
