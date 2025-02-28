@@ -133,6 +133,7 @@ func unmountWindows(volume string) error {
 
 	// Prepare PowerShell command
 	cmd := exec.Command("powershell.exe",
+		"-noprofile",
 		"-nologo",
 		"-windowstyle", "Hidden",
 		"-command", psCommand,
@@ -189,6 +190,7 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 
 		// Build the PowerShell command
 		cmd := exec.Command("powershell.exe",
+			"-noprofile",
 			"-nologo",
 			"-windowstyle", "Hidden",
 			"-command", psCmd,
@@ -202,8 +204,9 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("Error formatting volume %s: %v", devicePath, err)
+			return fmt.Errorf("error formatting volume %s: %v", devicePath, err)
 		}
+
 		fmt.Println("Format completed successfully.")
 
 	case "linux":
