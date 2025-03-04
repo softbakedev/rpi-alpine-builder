@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 // ListBlockDevices enumerates block devices per OS
@@ -141,7 +140,7 @@ func unmountWindows(volume string) error {
 	)
 
 	//// Prevent spawning a new PowerShell window
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+	cmd.SysProcAttr = getNoWindowSysProcAttr() // CREATE_NO_WINDOW
 
 	// (Optional) Redirect output to see errors in your main console or logs
 	cmd.Stdout = os.Stdout
@@ -198,7 +197,7 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 		)
 
 		// Hide the window
-		//cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+		cmd.SysProcAttr = getNoWindowSysProcAttr() // CREATE_NO_WINDOW
 
 		// (Optional) Capture or redirect output
 		cmd.Stdout = os.Stdout
