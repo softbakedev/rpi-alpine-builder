@@ -114,8 +114,8 @@ func PickDevices(devices []string) (*string, error) {
 // unmountDevice unmounts the given device using external commands based on the OS.
 func unmountDevice(volume string) error {
 	switch runtime.GOOS {
-	case "windows":
-		return unmountWindows(volume)
+	//case "windows":
+	//	return nil
 	case "linux":
 		return unmountLinux(volume)
 	case "darwin":
@@ -123,30 +123,6 @@ func unmountDevice(volume string) error {
 	default:
 		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}
-}
-
-// unmountWindows unmounts the volume on Windows using PowerShell commands,
-// but prevents a window from being shown by setting HideWindow = true.
-func unmountWindows(volume string) error {
-	driveLetter := strings.TrimSuffix(volume, ":")
-	psCommand := fmt.Sprintf("Dismount-Volume -DriveLetter %s -Force", driveLetter)
-
-	// Prepare PowerShell command
-	cmd := exec.Command("powershell.exe",
-		"-noprofile",
-		"-nologo",
-		"-windowstyle", "Hidden",
-		"-command", psCommand,
-	)
-
-	//// Prevent spawning a new PowerShell window
-	cmd.SysProcAttr = getNoWindowSysProcAttr() // CREATE_NO_WINDOW
-
-	// (Optional) Redirect output to see errors in your main console or logs
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
 }
 
 // unmountLinux unmounts the volume on Linux using the 'umount' command.
@@ -165,6 +141,25 @@ func unmountMacOS(volume string) error {
 	return cmd.Run()
 }
 
+// extractDriveLetter tries to parse a Windows drive letter from a path like "E:" or "e:".
+// If it fails, it either returns an error or you can default to a letter (e.g. "E").
+func extractDriveLetter(devicePath string) (string, error) {
+	// A simple regex that matches an optional colon (e.g. "E" or "E:")
+	// The capturing group will extract the letter (E).
+	validDriveLetterRE := regexp.MustCompile(`(?i)^([A-Z]):?$`)
+
+	matches := validDriveLetterRE.FindStringSubmatch(strings.TrimSpace(devicePath))
+	if len(matches) == 2 {
+		// Return uppercase letter, e.g. "E"
+		return strings.ToUpper(matches[1]), nil
+	}
+
+	// Either fallback to a default drive letter:
+	//   return "E", nil
+	// OR fail with an error:
+	return "", fmt.Errorf("not a valid Windows drive letter")
+}
+
 // FormatVolumeFat32 formats the given volume with a FAT32 filesystem
 func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 	fmt.Println("Formatting volume as FAT32...")
@@ -180,15 +175,21 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 
 	switch runtime.GOOS {
 	case "windows":
-		// On Windows, devicePath is the drive letter (e.g. "E:")
 		fmt.Printf("Formatting volume %s (Windows)...\n", devicePath)
 
-		// Extract the drive letter (remove the colon if present).
-		driveLetter := strings.TrimSuffix(devicePath, ":")
-		psCmd := fmt.Sprintf("Format-Volume -DriveLetter %s -FileSystem FAT32 -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false",
-			driveLetter, volumeLabel, volumeSizeMg)
+		// 1) Extract or fix the drive letter from devicePath
+		driveLetter, err := extractDriveLetter(devicePath)
+		if err != nil {
+			return fmt.Errorf("invalid device path: %s: %v", devicePath, err)
+		}
 
-		// Build the PowerShell command
+		// 2) Build the PowerShell command
+		psCmd := fmt.Sprintf(
+			"Format-Volume -DriveLetter %s -FileSystem exFAT -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false",
+			driveLetter,
+			volumeLabel,
+			volumeSizeMg,
+		)
 		cmd := exec.Command("powershell.exe",
 			"-noprofile",
 			"-nologo",
@@ -196,13 +197,14 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 			"-command", psCmd,
 		)
 
-		// Hide the window
-		cmd.SysProcAttr = getNoWindowSysProcAttr() // CREATE_NO_WINDOW
+		// Hide the PowerShell window on Windows
+		cmd.SysProcAttr = getNoWindowSysProcAttr()
 
 		// (Optional) Capture or redirect output
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
+		// 3) Run it
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("error formatting volume %s: %v", devicePath, err)
 		}
