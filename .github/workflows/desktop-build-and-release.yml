@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        go-version: ['1.22.6']  # Adjust as needed
+        go-version: ['1.24.0']  # Adjust as needed
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

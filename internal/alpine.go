@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	cp "github.com/otiai10/copy"
 	"io"
 	"io/fs"
 	"net/http"
@@ -388,7 +387,7 @@ func BuildImage(cliName, volumeDir, hostname string) error {
 	apkovlPath := filepath.Join(cacheDir, cliName, "apkovl")
 
 	// Copy Alpine data
-	if err := cp.Copy(alpinePath, volumeDir); err != nil {
+	if err := os.CopyFS(alpinePath, os.DirFS(volumeDir)); err != nil {
 		return fmt.Errorf("error copying alpine data into volumeDir %s: %v", volumeDir, err)
 	}
 

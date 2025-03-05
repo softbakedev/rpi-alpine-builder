@@ -205,7 +205,7 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 
 		// 3) Run it
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("error formatting volume %s: %v", devicePath, err)
+			return fmt.Errorf("error formatting volume %s: %v", driveLetter, err)
 		}
 
 		fmt.Println("Format completed successfully.")
