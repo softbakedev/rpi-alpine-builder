@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -141,23 +142,21 @@ func unmountMacOS(volume string) error {
 	return cmd.Run()
 }
 
-// extractDriveLetter tries to parse a Windows drive letter from a path like "E:" or "e:".
-// If it fails, it either returns an error or you can default to a letter (e.g. "E").
+// extractDriveLetter takes a path like "E:SomeFolder" or "!!E::Stuff"
+// and returns a single uppercase letter like "E".
+// It first strips out all non-alphanumeric chars, then uses the first character.
 func extractDriveLetter(devicePath string) (string, error) {
-	// A simple regex that matches an optional colon (e.g. "E" or "E:")
-	// The capturing group will extract the letter (E).
-	validDriveLetterRE := regexp.MustCompile(`(?i)^([A-Z]):?$`)
+	// 1) Remove all characters that are not [a-zA-Z0-9].
+	alphanumericOnly := regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(devicePath, "")
 
-	matches := validDriveLetterRE.FindStringSubmatch(strings.TrimSpace(devicePath))
-	if len(matches) == 2 {
-		// Return uppercase letter, e.g. "E"
-		return strings.ToUpper(matches[1]), nil
+	if len(alphanumericOnly) == 0 {
+		return "", errors.New("no alphanumeric character found in path")
 	}
 
-	// Either fallback to a default drive letter:
-	//   return "E", nil
-	// OR fail with an error:
-	return "", fmt.Errorf("not a valid Windows drive letter")
+	// 2) We only want the first character as a 'drive letter', in uppercase:
+	driveLetter := strings.ToUpper(string(alphanumericOnly[0]))
+
+	return driveLetter, nil
 }
 
 // FormatVolumeFat32 formats the given volume with a FAT32 filesystem
