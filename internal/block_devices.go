@@ -114,8 +114,8 @@ func PickDevices(devices []string) (*string, error) {
 // unmountDevice unmounts the given device using external commands based on the OS.
 func unmountDevice(volume string) error {
 	switch runtime.GOOS {
-	//case "windows":
-	//	return nil
+	case "windows":
+		return nil
 	case "linux":
 		return unmountLinux(volume)
 	case "darwin":
