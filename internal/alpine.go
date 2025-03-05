@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -376,6 +377,50 @@ func updatePlaceholdersInExtracted(extractDir, hostname, ssid, psk, shadowPass s
 	})
 }
 
+// copyDirectory walks `srcDir` and copies each file/subdir into `dstDir`.
+func copyDirectory(srcDir, dstDir string) error {
+	return filepath.Walk(srcDir, func(srcPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			// If we can't read something in the source, skip or return error
+			log.Printf("Skipping unreadable path: %s: %v", srcPath, err)
+			return nil
+		}
+
+		// Build the corresponding destination path
+		relPath, _ := filepath.Rel(srcDir, srcPath)
+		dstPath := filepath.Join(dstDir, relPath)
+
+		// If it's a directory, create it in the destination
+		if info.IsDir() {
+			if err := os.MkdirAll(dstPath, info.Mode()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Otherwise, it's a file -> copy the contents
+		return copyFile(srcPath, dstPath, info.Mode())
+	})
+}
+
+// copyFile copies a single file from srcFile to dstFile
+func copyFile(srcFile, dstFile string, perm os.FileMode) error {
+	src, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.OpenFile(dstFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
+}
+
 // BuildImage copies Alpine data and creates a .tar.gz for the apkovl
 func BuildImage(cliName, volumeDir, hostname string) error {
 	cacheDir, err := os.UserHomeDir()
@@ -387,7 +432,7 @@ func BuildImage(cliName, volumeDir, hostname string) error {
 	apkovlPath := filepath.Join(cacheDir, cliName, "apkovl")
 
 	// Copy Alpine data
-	if err := os.CopyFS(alpinePath, os.DirFS(volumeDir)); err != nil {
+	if err := copyDirectory(alpinePath, volumeDir); err != nil {
 		return fmt.Errorf("error copying alpine data into volumeDir %s: %v", volumeDir, err)
 	}
 
