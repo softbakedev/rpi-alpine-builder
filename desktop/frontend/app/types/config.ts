@@ -3,7 +3,7 @@ export interface AlpineConfig {
   hostname: string
   wifiNetwork: string
   customWifiNetwork?: string
-  wifiPassword: string
+  wifiPassword?: string
   rootPassword: string
   volumeDirectory: string
 }

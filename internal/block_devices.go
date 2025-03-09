@@ -184,7 +184,7 @@ func FormatVolumeFat32(volumePath, volumeLabel string, volumeSizeMg int) error {
 
 		// 2) Build the PowerShell command
 		psCmd := fmt.Sprintf(
-			"Format-Volume -DriveLetter %s -FileSystem exFAT -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false",
+			"Format-Volume -DriveLetter %s -FileSystem FAT32 -NewFileSystemLabel '%s' -AllocationUnitSize %d -Confirm:$false",
 			driveLetter,
 			volumeLabel,
 			volumeSizeMg,

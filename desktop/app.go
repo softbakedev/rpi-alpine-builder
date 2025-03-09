@@ -151,9 +151,9 @@ func validateRpiAlpineParams(rpiAlpineParams RpiAlpineParams) error {
 		return errors.New("attribute wifi name cannot be empty")
 	}
 
-	if len(rpiAlpineParams.WifiPassword) == 0 {
-		return errors.New("attribute wifi password cannot be empty")
-	}
+	//if len(rpiAlpineParams.WifiPassword) == 0 {
+	//	return errors.New("attribute wifi password cannot be empty")
+	//}
 
 	if len(rpiAlpineParams.RootPassword) == 0 {
 		return errors.New("attribute root password cannot be empty")

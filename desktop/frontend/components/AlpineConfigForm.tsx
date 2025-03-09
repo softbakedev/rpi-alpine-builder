@@ -136,12 +136,12 @@ export function AlpineConfigForm({
         }
     }, [errorMessage])
 
-    const renderField = (name: keyof AlpineConfig, placeholder: string, type = "text", options?: string[]) => (
+    const renderField = (name: keyof AlpineConfig, placeholder: string, type = "text", options?: string[], required: boolean = true) => (
         <div className="relative group">
             <Controller
                 name={name}
                 control={control}
-                rules={{ required: true }}
+                rules={{ required: required }}
                 render={({ field }) => (
                     <>
                         {type === "select" ? (
@@ -220,7 +220,7 @@ export function AlpineConfigForm({
                         {renderField("version", "Select Alpine Version", "select", versions || [])}
                         {renderField("hostname", "Enter Hostname")}
                         {renderWifiNetworkField()}
-                        {renderField("wifiPassword", "Enter WiFi Password", "password")}
+                        {renderField("wifiPassword", "Enter WiFi Password", "password", [], false)}
                         {renderField("rootPassword", "Enter Root Password", "password")}
                         {renderField("volumeDirectory", "Select Volume Directory", "select", directories || [])}
                     </div>
